@@ -1,3 +1,70 @@
+/*jslint bitwise : true*/
+/*global d3*/
+
+var Neuron = (function () {
+
+    // Creates and returns a 2-dimentional array matrix
+    function matrix(rows, cols) {
+        var v = [];
+        var i = rows, j;
+        while (i--) {
+            v[i] = [];
+            j = cols;
+            while (j--) {
+                v[i][j] = 0;
+            }
+        }
+        return v;
+    }
+
+    function copy_matrix(dst, src) {
+        var rows, cols, i, j;
+        if (!(dst instanceof Array && src instanceof Array)) {
+            return;
+        }
+        if (dst.length < 1) {
+            return;
+        }
+        rows = dst.length;
+        cols = dst[0].length;
+        i = rows;
+        while (i--) {
+            j = cols;
+            while (j--) {
+
+            }
+        }
+    }
+
+
+    function constructor(config) {
+        config = config || {};
+        // Dimension (we use more readable rows and cols instead of m and n)
+        this.rows = config.rows || 1;
+        this.cols = config.cols || 1;
+        // Life time
+        this.NS = config.NS || 1;
+        // Sensor matrix
+        this.SM = matrix(this.rows, this.cols);
+        // Initial memory matrix
+        this.P0 = matrix(1, this.cols);
+        // Memory matrix
+        this.P = matrix(1, this.cols);
+        // Attention matrix
+        this.U = matrix(this.rows, 1);
+    }
+
+    function methods() {
+    }
+
+    methods.apply(constructor.prototype);
+
+    return constructor;
+}());
+
+
+var neuron = new Neuron();
+
 
 // Helper methods
 
@@ -7,20 +74,24 @@ function decode2D(i, rows, cols) {
 }
 
 
-// Embrion object
+// embrionView object
 
-var Embrion = (function () {
+var embrionView = (function () {
 
-    var config = {
-        showBooleans : true,
-    };
+    // var config = {
+    //     showBooleans : true,
+    // };
 
     // Creates and returns a 2-dimentional array
     function arrayMatrix(rows, cols) {
-        var v = new Array(rows);
-        var i = v.length;
+        var v = [];
+        var i = rows, j;
         while (i--) {
-            v[i] = new Array(cols);
+            v[i] = [];
+            j = cols;
+            while (j--) {
+                v[i][j] = 0;
+            }
         }
         return v;
     }
@@ -44,14 +115,14 @@ var Embrion = (function () {
         var g = parent.append('g')
             .classed('matrix', true)
             .attr('transform', function () {
-            return 'translate(' + x + ',' + y + ')';
-        });
+                return 'translate(' + x + ',' + y + ')';
+            });
         if (className) {
             g.classed(className, true);
         }
 
         var ret = {
-            updateCell : function () {},
+            updateCell : function () { return; },
             update: function () {
                 // Matrix rows represented by groups
                 var row = g.selectAll('g.row').data(data);
@@ -60,8 +131,8 @@ var Embrion = (function () {
                     .append('g')
                     .attr('class', 'row')
                     .attr('transform', function (d, i) {
-                    return 'translate(0, ' + i * h + ')';
-                });
+                        return 'translate(0, ' + i * h + ')';
+                    });
 
                 // Each matrix cell is a group
                 var cell = row.selectAll('g').data(function (d) {
@@ -72,8 +143,8 @@ var Embrion = (function () {
                     .append('g')
                     .attr('class', 'cell')
                     .attr('transform', function (d, i) {
-                    return 'translate(' + i * w + ')';
-                });
+                        return 'translate(' + i * w + ')';
+                    });
 
                 // Each cell consists of a rectangle ...
                 enter.append('rect')
@@ -114,14 +185,14 @@ var h = 30; // Heigth of the matrix cell
 var rows = 2;
 var cols = 3;
 
-var sensorMatrix = Embrion.arrayMatrix(rows, cols);
-var hypoMatrix = Embrion.arrayMatrix(rows, 1);
-var neuroMatrix = Embrion.arrayMatrix(1, cols);
+var sensorMatrix = embrionView.arrayMatrix(rows, cols);
+var hypoMatrix = embrionView.arrayMatrix(rows, 1);
+var neuroMatrix = embrionView.arrayMatrix(1, cols);
 
 var svg = d3.select('body').append('svg')
     .attr('width', 500)
     .attr('height', 500)
-    .classed('unselectable', true);;
+    .classed('unselectable', true);
 
 
 sensorMatrix[0][1] = true;
@@ -132,11 +203,11 @@ sensorMatrix[1][0] = true;
 var neuro, sensor, hypo;
 var x = 1;
 var y = 1;
-neuro = Embrion.svgMatrix(svg, neuroMatrix, x, y, w, h, 'neuro');
+neuro = embrionView.svgMatrix(svg, neuroMatrix, x, y, w, h, 'neuro');
 y += 1.5 * h;
-sensor = Embrion.svgMatrix(svg, sensorMatrix, x, y, w, h, 'sensor');
+sensor = embrionView.svgMatrix(svg, sensorMatrix, x, y, w, h, 'sensor');
 x = w * cols + w / 2;
-hypo = Embrion.svgMatrix(svg, hypoMatrix, x, y, w, h, 'hypo');
+hypo = embrionView.svgMatrix(svg, hypoMatrix, x, y, w, h, 'hypo');
 
 
 // Set update function for each matrix
