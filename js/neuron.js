@@ -10,71 +10,74 @@ var Neuron = (function () {
         // The state machine
         var state, states = {
             init : function () {
-                ns = this.NS;
-                state = states.check_ns;
+                ns = +this.NS;
+                if (this.U.rows() > 0 && this.P.cols() > 0) {
+                    state = states.NS;
+                }
             },
-            check_ns : function () {
+            NS : function () {
                 if (ns > 0) {
-                    row = 0;
                     ns -= 1;
-                    state = states.check_row;
+                    row = 0;
+                    u = +this.U.get(row, 0);
+                    state = states.U;
                 } else {
                     state = states.init;
                 }
             },
-            check_row : function () {
-                if (row < this.U.rows()) {
-                    u = +this.U.get(row, 0);
-                    state = states.select_u;
-                } else {
-                    row += 1;
-                    state = states.check_ns;
-                }
-            },
-            select_u : function () {
+            U : function () {
                 if (u > 0) {
                     u -= 1;
-                    col = Math.random() * this.SM.cols() | 0;
-                    sm = +this.SM.get(row, col);
-                    state = states.select_sm;
+                    state = states.SM;
                 } else {
                     row += 1;
-                    state = states.check_row;
+                    if (row < this.U.rows()) {
+                        u = +this.U.get(row, 0);
+                    } else {
+                        state = states.NS;
+                    }
                 }
             },
-            select_sm : function () {
-                p = +this.P.get(0, col);
-                state = states.select_p;
+            SM : function () {
+                col = Math.random() * this.SM.cols() | 0;
+                sm = +this.SM.get(row, col);
+                state = states.P;
             },
-            select_p : function () {
-                if (sm !== p) {
-                    this.event('p');
-                }
-                state = states.select_u;
+            P : function () {
+                p = this.P.get(0, col);
+                this.event(sm !== p);
+                state = states.U;
             }
         };
         state = states.init;
 
-        // // Give names to the states-functions for debugging
-        // var key;
-        // for (key in states) {
-        //     if (states.hasOwnProperty(key)) {
-        //         if (!states[key]._name) {
-        //             states[key]._name = key;
-        //         }
-        //     }
-        // }
+        var debug = false;
+        // Give names to the states-functions for debugging
+        if (debug) {
+            var key;
+            for (key in states) {
+                if (states.hasOwnProperty(key)) {
+                    if (!states[key]._name) {
+                        states[key]._name = key;
+                    }
+                }
+            }
+        }
 
-        // var ost = state;
-        // var i = 0;
+        var ost = state;
+        var i = 0;
         return function loop() {
             state.apply(this, arguments);
             loop.done = state === states.init;
-            // // Debug transitions
-            // if (ost !== state) {
-            //     console.log(i++, ost._name, '->', state._name);
-            //     ost = state;
-            // }
+            // Debug transitions
+            if (debug) {
+                if (ost !== state) {
+                    console.log(i++, ost._name, '->', state._name);
+                    ost = state;
+                } else {
+                    console.log(i++, state._name);
+                }
+            }
             return loop;
         };
     }
