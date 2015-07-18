@@ -25,11 +25,12 @@ var Spinner = (function () {
         input.apply(this, arguments);
     }
 
-    function constructor(name, min, max, step, value, callback) {
-        this.min = min !== undefined ? min : 0;
-        this.max = max !== undefined ? max : Math.max(min + 10, 100);
-        this.step = step !== undefined ? step : 1;
-        this.value = value !== undefined ? value : this.min;
+    function constructor(name, config, callback) {
+        config = config || {};
+        this.min = config.min !== undefined ? config.min : 0;
+        this.max = config.max !== undefined ? config.max : Math.max(this.min + 10, 100);
+        this.step = config.step !== undefined ? config.step : 1;
+        this.value = config.value !== undefined ? config.value : this.min;
         this.scale = 1;
         this.callback = typeof callback === 'function' ? callback : dummy;
 

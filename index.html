@@ -19,16 +19,35 @@
     
     <div class="wrap">
         <main role="main">
+
+        <input type='button' id='start' value='Start' style='width: 4em'>
+
+        <label for="NS"
+             style="display: inline-block; width: 4em; text-align: right">
+             NS =
+        </label>
+        <input type='number' id='NS' style='width: 4em; text-align: right'>
+
+        <label for="delay"
+             style="display: inline-block; width: 8em; text-align: right">
+             Delay, ms =
+        </label>
+        <input type='number' id='delay' style='width: 4em; text-align: right'>
+
         
         </main>
     </div>
+    
+    <p>
+    </p>
 
     <script src="lib/d3/d3.js"></script>
+    <script src="js/spinner.js"></script>
     <script src="js/matrix.js"></script>
     <script src="js/neuron.js"></script>
     <script src="js/main.js"></script>
     
-    <footer role="contentinfo">
+    <footer role="contentinfo" style='position: absolute; bottom: 0'>
         <small>Copyright &copy; <time datetime="2015">2015</time> Dmitry Myadzelets</small>
     </footer>
 

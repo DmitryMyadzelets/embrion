@@ -1,5 +1,5 @@
 /*jslint bitwise : true*/
-/*global d3, Neuron*/
+/*global d3, Neuron, Spinner*/
 
 
 var neuron = new Neuron();
@@ -20,20 +20,6 @@ var embrionView = (function () {
     // var config = {
     //     showBooleans : true,
     // };
-
-    // Creates and returns a 2-dimentional array
-    function arrayMatrix(rows, cols) {
-        var v = [];
-        var i = rows, j;
-        while (i--) {
-            v[i] = [];
-            j = cols;
-            while (j--) {
-                v[i][j] = 0;
-            }
-        }
-        return v;
-    }
 
     // Creates and returns an object: { 
     // cell : selection d3.js
@@ -109,7 +95,6 @@ var embrionView = (function () {
 
     return {
         svgMatrix : svgMatrix,
-        arrayMatrix : arrayMatrix
     };
 
 }());
@@ -118,35 +103,46 @@ var embrionView = (function () {
 // ===========================================================================
 // The application
 
-var w = 30; // Width of the matrix cell
-var h = 30; // Heigth of the matrix cell
+var rows, cols;
 
-var rows = 2;
-var cols = 3;
+var neuron = new Neuron();
+// Set real values
+rows = neuron.SM.rows();
+cols = neuron.SM.cols();
 
-var sensorMatrix = embrionView.arrayMatrix(rows, cols);
-var hypoMatrix = embrionView.arrayMatrix(rows, 1);
-var neuroMatrix = embrionView.arrayMatrix(1, cols);
+function init_neuron() {
+    function zero() {
+        return 0;
+    }
+    neuron.SM.each(zero);
+    neuron.U.each(function () {
+        return 1 + Math.random() * 10 | 0;
+    });
+    neuron.P.each(zero);
+}
 
-var svg = d3.select('body').append('svg')
-    .attr('width', 500)
-    .attr('height', 500)
-    .classed('unselectable', true);
+init_neuron();
 
-
-sensorMatrix[0][1] = true;
-sensorMatrix[1][0] = true;
 
 // Show matrices
 
-var neuro, sensor, hypo;
+var w = 30; // Width of the matrix cell
+var h = 30; // Heigth of the matrix cell
+
+var svg = d3.select('body').append('svg')
+    .attr('width', 500)
+    .attr('height', 300)
+    .classed('unselectable', true);
+
+var neuro, sensor, attent;
 var x = 1;
 var y = 1;
-neuro = embrionView.svgMatrix(svg, neuroMatrix, x, y, w, h, 'neuro');
+neuro = embrionView.svgMatrix(svg, neuron.P.data, x, y, w, h, 'neuro');
 y += 1.5 * h;
-sensor = embrionView.svgMatrix(svg, sensorMatrix, x, y, w, h, 'sensor');
+sensor = embrionView.svgMatrix(svg, neuron.SM.data, x, y, w, h, 'sensor');
 x = w * cols + w / 2;
-hypo = embrionView.svgMatrix(svg, hypoMatrix, x, y, w, h, 'hypo');
+attent = embrionView.svgMatrix(svg, neuron.U.data, x, y, w, h, 'hypo');
+
 
 
 // Set update function for each matrix
@@ -163,25 +159,81 @@ function updateNumberCell(d) {
 }
 
 sensor.updateCell = updateBooleanCell;
-sensor.update();
-
 neuro.updateCell = updateBooleanCell;
-neuro.update();
+attent.updateCell = updateNumberCell;
 
-hypo.updateCell = updateNumberCell;
-hypo.update();
+function update() {
+    sensor.update();
+    neuro.update();
+    attent.update();
+}
 
 
 // Hook user input events
 
 // Sensor matrix
 sensor.cell.on('mousedown', function (d, col, row) {
-    sensorMatrix[row][col] = !d;
+    neuron.SM.set(row, col, !d);
     sensor.update();
 });
 
 // Neuro matrix
 neuro.cell.on('mousedown', function (d, col, row) {
-    neuroMatrix[row][col] = !d;
+    neuron.P.set(row, col, !d);
     neuro.update();
 });
+
+update();
+
+// Neuron's cycle
+
+var tid, delay = 100;
+var row;
+function step() {
+    if (neuron.run()) {
+    } else {
+        clearInterval(tid);
+    }
+    row = neuron.row;
+    update();
+}
+
+
+function start() {
+    clearInterval(tid);
+    tid = setInterval(step, delay);
+}
+
+
+var spinner_ns = new Spinner('input#NS',
+    {
+        min : 1,
+        max : 100,
+        value : neuron.NS
+    }, function (value) {
+        neuron.NS = value;
+    });
+
+var spinner_delay = new Spinner('input#delay', {
+        min : 0,
+        max : 1000,
+        step : 100,
+        value : 50
+    }, function (value) {
+        if (value < delay) {
+            if (this.value <= 10) {
+                this.set_step(1);
+            } else if (this.value <= 100) {
+                this.set_step(10);
+            }
+        } else {
+            if (this.value >= 100) {
+                this.set_step(100);
+            } else if (this.value >= 10) {
+                this.set_step(10);
+            }
+        }
+        delay = value;
+    });
+
+d3.select('input#start').on('click', start);

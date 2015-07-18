@@ -5,7 +5,7 @@ var Neuron = (function () {
 
     function automaton() {
 
-        var ns, row, col, u, sm, p;
+        var ns, u, sm, p, row, col;
 
         // The state machine
         var state, states = {
@@ -45,7 +45,10 @@ var Neuron = (function () {
             },
             P : function () {
                 p = this.P.get(0, col);
-                this.event(sm !== p);
+                if (sm !== p) {
+                    this.P.set(0, col, sm);
+                    this.event(sm !== p);
+                }
                 state = states.U;
             }
         };
@@ -82,6 +85,50 @@ var Neuron = (function () {
         };
     }
 
+    function run() {
+        var init = true;
+        var ns, row, col, u, sm, p;
+        var old_u;
+
+        return function () {
+            if (init) {
+                init = false;
+                ns = this.NS;
+                row = 0;
+                u = this.U.get(row, 0);
+                old_u = u;
+            }
+            this.row = row;
+
+            if (--u > 0) {
+                col = Math.random() * this.P.cols() | 0;
+                this.col = col;
+                sm = !!this.SM.get(row, col);
+                p = !!this.P.get(0, col);
+                this.P.set(0, col, sm);
+                this.U.set(row, 0, u);
+                return true;
+            }
+            this.U.set(row, 0, old_u);
+
+            if (++row < this.U.rows()) {
+                u = this.U.get(row, 0);
+                old_u = u;
+                return true;
+            }
+            row = 0;
+            u = this.U.get(row, 0);
+            old_u = u;
+
+            ns -= 1;
+            if (ns > 0) {
+                return true;
+            }
+            init = true;
+            return false;
+        };
+    }
+
 
     function constructor(config) {
         config = config || {};
@@ -89,6 +136,9 @@ var Neuron = (function () {
         // Dimension (we use more readable rows and cols instead of m and n)
         var rows = config.rows || 2;
         var cols = config.cols || 3;
+
+        this.row = 0;
+        this.col = 0;
 
         // Sensor matrix
         this.SM = new Matrix(rows, cols);
@@ -101,7 +151,7 @@ var Neuron = (function () {
         // Life time
         this.NS = config.NS || 1;
 
-        this.run = automaton();
+        this.run = run();
     }
 
     function methods() {
